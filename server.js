@@ -20,14 +20,10 @@ const io = socketIo(server, {
 app.use(cors());
 app.use(express.json());
 
-// ========== MongoDB Connection ==========
-const mongoURI = "mongodb+srv://adityamhsohagpure1020:Msi5CKjeNWF3k1Zk@Cluster0.noarlvh.mongodb.net/chatDb?retryWrites=true&w=majority";
-
-mongoose
-  .connect(mongoURI)
+// ========== MongoDB Connection =========
+mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("✅ Connected to MongoDB Atlas"))
   .catch((err) => console.error("❌ MongoDB connection error:", err.message));
-
 // ========== Schema & Model ==========
 const MessageSchema = new mongoose.Schema({
   senderId: String,
