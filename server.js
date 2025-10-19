@@ -21,8 +21,7 @@ app.use(cors());
 app.use(express.json());
 
 // ========== MongoDB Connection ==========
-const mongoURI = "mongodb://adityamhsohagpure1020:Msi5CKjeNWF3k1Zk@cluster0-shard-00-00.abcde.mongodb.net:27017,cluster0-shard-00-01.abcde.mongodb.net:27017,cluster0-shard-00-02.abcde.mongodb.net:27017/chatDB?ssl=true&replicaSet=atlas-xxxxx-shard-0&authSource=admin&retryWrites=true&w=majority";
-
+const mongoURI = "mongodb+srv://adityamhsohagpure1020:Msi5CKjeNWF3k1Zk@cluster0.noarlvh.mongodb.net/"
 mongoose
   .connect(mongoURI)
   .then(() => console.log("✅ Connected to MongoDB Atlas"))
