@@ -21,7 +21,7 @@ app.use(cors());
 app.use(express.json());
 
 // ========== MongoDB Connection ==========
-const mongoURI = "mongodb+srv://adityamhsohagpure1020:Msi5CKjeNWF3k1Zk@cluster0.noarlvh.mongodb.net/chatDb?retryWrites=true&w=majority";
+const mongoURI = "mongodb+srv://adityamhsohagpure1020:Msi5CKjeNWF3k1Zk@Cluster0.noarlvh.mongodb.net/chatDb?retryWrites=true&w=majority";
 //ggg
 mongoose
   .connect(mongoURI)
