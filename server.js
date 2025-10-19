@@ -22,7 +22,7 @@ app.use(express.json());
 
 // ========== MongoDB Connection ==========
 const mongoURI = "mongodb+srv://adityamhsohagpure1020:Msi5CKjeNWF3k1Zk@Cluster0.noarlvh.mongodb.net/chatDb?retryWrites=true&w=majority";
-//ggg
+
 mongoose
   .connect(mongoURI)
   .then(() => console.log("✅ Connected to MongoDB Atlas"))
