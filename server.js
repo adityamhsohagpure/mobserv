@@ -20,6 +20,8 @@ const io = socketIo(server, {
 app.use(cors());
 app.use(express.json());
 
+
+
 // ========== MongoDB Connection =========
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("✅ Connected to MongoDB Atlas"))
@@ -120,4 +122,54 @@ io.on("connection", (socket) => {
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
+});
+// ========== User Schema & Model ==========
+const UserSchema = new mongoose.Schema({
+  name: String,
+  email: {
+    type: String,
+    unique: true, // ensures no duplicate emails
+    required: true,
+  },
+  password: String,
+  createdAt: { type: Date, default: Date.now },
+});
+
+const User = mongoose.model("User", UserSchema);
+
+// ========== Signup Route ==========
+app.post("/signup", async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+
+    // Basic validation
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: "All fields are required" });
+    }
+
+    // Check if email already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(409).json({ error: "Email already registered" });
+    }
+
+    // Create user (⚠️ plain text password as requested)
+    const newUser = new User({ name, email, password });
+    await newUser.save();
+
+    res.status(201).json({
+      message: "Signup successful",
+      user: {
+        id: newUser._id,
+        name: newUser.name,
+        email: newUser.email,
+      },
+    });
+  } catch (err) {
+    // Handles duplicate key errors from MongoDB (even with race conditions)
+    if (err.code === 11000) {
+      return res.status(409).json({ error: "Email already registered" });
+    }
+    res.status(500).json({ error: err.message });
+  }
 });
