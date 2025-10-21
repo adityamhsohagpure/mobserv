@@ -90,7 +90,7 @@ app.post("/messages", async (req, res) => {
   }
 });
 
-// ========== Socket.IO ==========
+// ========== Socket.IO ==========  
 io.on("connection", (socket) => {
   console.log("🟢 A user connected: " + socket.id);
 
@@ -170,6 +170,41 @@ app.post("/signup", async (req, res) => {
     if (err.code === 11000) {
       return res.status(409).json({ error: "Email already registered" });
     }
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ========== Login Route ==========
+app.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Basic validation
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email and password are required" });
+    }
+
+    // Check if user exists
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Compare plain text password (⚠️ In production, use bcrypt)
+    if (user.password !== password) {
+      return res.status(401).json({ error: "Invalid password" });
+    }
+
+    // Successful login
+    res.status(200).json({
+      message: "Login successful",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+      },
+    });
+  } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
