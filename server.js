@@ -8,6 +8,7 @@ const cors = require('cors');
 const messageRoutes = require('./routes/messageRoutes');
 const initChat = require('./sockets/chatSocket');
 const logger = require('./utils/logger');
+const postRoutes = require('./routes/postRoutes');
 
 // ========== Setup ==========
 const app = express();
@@ -25,6 +26,11 @@ app.use(express.json());
 
 // mount routes
 app.use('/', messageRoutes);
+
+
+
+// Routes for creating and fetching user posts (post upload APIs)
+app.use('/api/posts', postRoutes);
 
 // connect to DB then start server
 connect(process.env.MONGO_URI).catch((err) => {
