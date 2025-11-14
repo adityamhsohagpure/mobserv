@@ -1,7 +1,7 @@
 const Post = require("../models/Post");
 const { v4: uuidv4 } = require("uuid");
 
-exports.createPost = async (req, res) => {
+exports.uploadPost = async (req, res) => {
   try {
     const { username, url, caption } = req.body;
 
