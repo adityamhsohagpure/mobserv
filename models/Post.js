@@ -17,6 +17,10 @@ const postSchema = new mongoose.Schema({
   caption: {
     type: String,
   },
+   type: {              
+    type: String,
+    required: true     
+  },
   date: {
     type: Date,
     default: Date.now,

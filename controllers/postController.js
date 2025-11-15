@@ -10,6 +10,7 @@ exports.uploadPost = async (req, res) => {
       username,
       url,
       caption,
+       type,  
     });
 
     await newPost.save();
