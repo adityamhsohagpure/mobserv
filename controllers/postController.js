@@ -3,21 +3,28 @@ const { v4: uuidv4 } = require("uuid");
 
 exports.uploadPost = async (req, res) => {
   try {
-    const { username, url, caption } = req.body;
+    // ⭐ FIX: Add "type" here
+    const { username, url, caption, type } = req.body;
+
+    if (!username || !url || !type) {
+      return res
+        .status(400)
+        .json({ message: "Username, URL and type are required" });
+    }
 
     const newPost = new Post({
-      postId: uuidv4(), // unique ID
+      postId: uuidv4(),
       username,
       url,
       caption,
-       type,  
+      type,   // ⭐ FIX: Type added here
     });
 
     await newPost.save();
 
     res.status(201).json({
       message: "Post uploaded successfully!",
-      post: newPost
+      post: newPost,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
