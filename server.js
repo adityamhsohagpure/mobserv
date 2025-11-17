@@ -9,6 +9,14 @@ const messageRoutes = require('./routes/messageRoutes');
 const initChat = require('./sockets/chatSocket');
 const logger = require('./utils/logger');
 const postRoutes = require('./routes/postRoutes');
+const authRoutes = require('./routes/authRoutes');
+
+
+app.use('/api/auth', authRoutes);
+
+
+
+
 
 // ========== Setup ==========
 const app = express();
