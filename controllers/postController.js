@@ -30,3 +30,21 @@ exports.uploadPost = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+exports.getPostsByUser = async (req, res) => {
+  try {
+    const { username } = req.params;
+
+    // ⭐ Case-insensitive search — GUARANTEED match
+    const posts = await Post.find({
+      username: { $regex: new RegExp(username, "i") }
+    });
+
+    res.status(200).json({
+      message: `Posts by ${username}`,
+      posts
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};

@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 // IMPORT NAME MUST MATCH EXACT EXPORT NAME
-const { uploadPost } = require("../controllers/postController");
+const { uploadPost , getPostsByUser } = require("../controllers/postController");
 
 // Test route (to confirm route is loading on Render)
 router.get("/test", (req, res) => {
@@ -11,4 +11,7 @@ router.get("/test", (req, res) => {
 
 // Upload post API
 router.post("/upload-post", uploadPost);
+// get by id
+router.get("/user/:username", getPostsByUser);
+
 module.exports = router;
