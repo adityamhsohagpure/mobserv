@@ -1,11 +1,12 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
-
 const User = require("../models/User");
+const jwt = require("jsonwebtoken");
+const sendEmail = require("../utils/sendEmail");
 
 const router = express.Router();
 
-// ================= SIGNUP =================
+// ================= SIGNUP + EMAIL VERIFICATION =================
 router.post("/signup", async (req, res) => {
   try {
     const { username, email, password } = req.body;
@@ -25,20 +26,52 @@ router.post("/signup", async (req, res) => {
       username,
       email,
       password: hashedPassword,
+      verified: false,
     });
+
+    // Create email verification token
+    const token = jwt.sign(
+      { userId: user._id },
+      process.env.EMAIL_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    const verifyLink = `${process.env.SERVER_URL}/api/auth/verify/${token}`;
+
+    // Send verification email
+    await sendEmail(
+      email,
+      "Verify your Email",
+      `
+        <h2>Verify Your Email</h2>
+        <p>Click the link below to verify your account:</p>
+        <a href="${verifyLink}">${verifyLink}</a>
+      `
+    );
 
     res.json({
       success: true,
-      message: "Signup successful!",
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-      },
+      message: "Signup successful! Check your email to verify your account.",
     });
-  } catch (err) {
-    console.error(err);
+
+  } catch (error) {
+    console.error(error);
     res.status(500).json({ error: "Server error" });
+  }
+});
+
+// ================= VERIFY EMAIL =================
+router.get("/verify/:token", async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    const decoded = jwt.verify(token, process.env.EMAIL_SECRET);
+
+    await User.findByIdAndUpdate(decoded.userId, { verified: true });
+
+    res.send("Your email has been verified successfully 🎉");
+  } catch (err) {
+    res.status(400).send("Invalid or expired verification link.");
   }
 });
 
@@ -54,6 +87,11 @@ router.post("/login", async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({ error: "Email not found." });
+    }
+
+    // Check if verified
+    if (!user.verified) {
+      return res.status(401).json({ error: "Please verify your email first." });
     }
 
     const valid = await bcrypt.compare(password, user.password);
@@ -77,3 +115,4 @@ router.post("/login", async (req, res) => {
 });
 
 module.exports = router;
+ 
