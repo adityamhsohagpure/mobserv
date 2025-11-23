@@ -26,34 +26,14 @@ router.post("/signup", async (req, res) => {
       username,
       email,
       password: hashedPassword,
-      verified: false,
+ 
     });
 
-    // Create email verification token
-    const token = jwt.sign(
-      { userId: user._id },
-      process.env.EMAIL_SECRET,
-      { expiresIn: "1d" }
-    );
 
-    const verifyLink = `${process.env.SERVER_URL}/api/auth/verify/${token}`;
 
-    // Send verification email
-    await sendEmail(
-      email,
-      "Verify your Email",
-      `
-        <h2>Verify Your Email</h2>
-        <p>Click the link below to verify your account:</p>
-        <a href="${verifyLink}">${verifyLink}</a>
-      `
-    );
+ 
 
-    res.json({
-      success: true,
-      message: "Signup successful! Check your email to verify your account.",
-    });
-
+  
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Server error" });
@@ -61,19 +41,7 @@ router.post("/signup", async (req, res) => {
 });
 
 // ================= VERIFY EMAIL =================
-router.get("/verify/:token", async (req, res) => {
-  try {
-    const { token } = req.params;
 
-    const decoded = jwt.verify(token, process.env.EMAIL_SECRET);
-
-    await User.findByIdAndUpdate(decoded.userId, { verified: true });
-
-    res.send("Your email has been verified successfully 🎉");
-  } catch (err) {
-    res.status(400).send("Invalid or expired verification link.");
-  }
-});
 
 // ================= LOGIN =================
 router.post("/login", async (req, res) => {
@@ -90,9 +58,7 @@ router.post("/login", async (req, res) => {
     }
 
     // Check if verified
-    if (!user.verified) {
-      return res.status(401).json({ error: "Please verify your email first." });
-    }
+   
 
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) {
