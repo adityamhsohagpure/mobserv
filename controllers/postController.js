@@ -4,17 +4,17 @@ const { v4: uuidv4 } = require("uuid");
 exports.uploadPost = async (req, res) => {
   try {
     // ⭐ FIX: Add "type" here
-    const { username, url, caption, type } = req.body;
+    const { userid, url, caption, type } = req.body;
 
-    if (!username || !url || !type) {
+    if (!userid || !url || !type) {
       return res
         .status(400)
-        .json({ message: "Username, URL and type are required" });
+        .json({ message: "Userid, URL and type are required" });
     }
 
     const newPost = new Post({
       postId: uuidv4(),
-      username,
+      userid,
       url,
       caption,
       type,   // ⭐ FIX: Type added here
@@ -33,15 +33,15 @@ exports.uploadPost = async (req, res) => {
 
 exports.getPostsByUser = async (req, res) => {
   try {
-    const { username } = req.params;
+    const { userid } = req.params;
 
     // ⭐ Case-insensitive search — GUARANTEED match
     const posts = await Post.find({
-      username: { $regex: new RegExp(username, "i") }
+      userid: { $regex: new RegExp(userid, "i") }
     });
 
     res.status(200).json({
-      message: `Posts by ${username}`,
+      message: `Posts by ${userid}`,
       posts
     });
   } catch (error) {

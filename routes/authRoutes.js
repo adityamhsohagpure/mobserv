@@ -26,19 +26,22 @@ router.post("/signup", async (req, res) => {
       username,
       email,
       password: hashedPassword,
- 
     });
 
+    // Remove password before sending response
+    const { password: pw, ...safeUser } = user.toObject();
 
+    res.status(201).json({
+      message: "Signup successful",
+      user: safeUser, // includes userId, username, email
+    });
 
- 
-
-  
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Server error" });
   }
 });
+
 
 // ================= VERIFY EMAIL =================
 
