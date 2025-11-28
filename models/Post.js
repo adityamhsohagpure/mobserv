@@ -7,22 +7,25 @@ const commentSchema = new mongoose.Schema({
   date: { type: Date, default: Date.now }
 });
 
-//  Post Schema
+// Post Schema
 const postSchema = new mongoose.Schema({
   postId: { type: String, required: true, unique: true },
-  username: { type: String, required: true },    // use username, not userid
+
+  // ✔ Using userid as your actual identity field
+  userid: { type: String, required: true },
+
   url: String,
   caption: { type: String, default: "" },
   type: { type: String, required: true },
   date: { type: Date, default: Date.now },
 
-  //  Likes Array
+  // Likes will store the user IDs who liked the post
   likes: {
-    type: [String],      // userid list
+    type: [String],
     default: []
   },
 
-  //  Comments Array
+  // Comments array
   comments: {
     type: [commentSchema],
     default: []
