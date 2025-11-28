@@ -1,3 +1,5 @@
+const Post = require("../models/Post");
+
 exports.toggleLike = async (req, res) => {
   try {
     const { postId } = req.params;
@@ -7,7 +9,11 @@ exports.toggleLike = async (req, res) => {
       return res.status(400).json({ error: "User ID is required" });
     }
 
-    const post = await Post.findOne({ postId });
+    // Try both: custom postId AND MongoDB _id
+    let post = await Post.findOne({ postId });
+    if (!post) {
+      post = await Post.findById(postId); // fallback
+    }
 
     if (!post) {
       return res.status(404).json({ error: "Post not found" });
@@ -16,10 +22,8 @@ exports.toggleLike = async (req, res) => {
     const alreadyLiked = post.likes.includes(userid);
 
     if (alreadyLiked) {
-      // 🔽 Unlike (remove userid)
-      post.likes = post.likes.filter((user) => user !== userid);
+      post.likes = post.likes.filter((id) => id !== userid);
     } else {
-      // 🔼 Like (push userid)
       post.likes.push(userid);
     }
 
@@ -29,11 +33,11 @@ exports.toggleLike = async (req, res) => {
       message: alreadyLiked ? "Unliked" : "Liked",
       likesCount: post.likes.length,
       likedBy: post.likes,
-      postId: postId
+      postId: post.postId || post._id
     });
 
   } catch (error) {
     console.error("Toggle like error:", error);
-    return res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message });
   }
 };
