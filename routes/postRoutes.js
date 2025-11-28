@@ -1,13 +1,10 @@
 const express = require("express");
 const router = express.Router();
-
 const {
-  uploadPost,
-  getPostsByUser,
-  getAllPosts,
- 
-  
-} = require("../controllers/postController");
+  addComment,
+  getComments,
+  deleteComment
+} = require("../controllers/commentController");
 const { toggleLike } = require("../controllers/likeController");
 // Test route
 router.get("/test", (req, res) => {
@@ -23,8 +20,12 @@ router.get("/user/:username", getPostsByUser);
 // Get all posts
 router.get("/", getAllPosts);
 
-// ⭐ LIKE / UNLIKE A POST
+//  LIKE / UNLIKE A POST
 router.post("/:postId/like", toggleLike);
 
+//  Comments
+router.post("/:postId/comments", addComment);       // Add comment
+router.get("/:postId/comments", getComments);       // Get comments
+router.delete("/:postId/comments/:commentId", deleteComment); // Delete
 
 module.exports = router;
