@@ -29,7 +29,7 @@ app.use(express.json());
 
 // ========== Routes ==========
 app.use('/api/auth', authRoutes);        // ✅ works now
-app.use('/', messageRoutes);
+app.use('/api/messages', messageRoutes); 
 app.use('/api/posts', postRoutes);
 
 // ========== DB Connect ==========
