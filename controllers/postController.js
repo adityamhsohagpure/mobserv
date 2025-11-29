@@ -18,7 +18,7 @@ exports.uploadPost = async (req, res) => {
       url,
       caption,
       type,   // ⭐ FIX: Type added here
-    });
+    });   
 
     await newPost.save();
 
