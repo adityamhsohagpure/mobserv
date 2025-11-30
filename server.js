@@ -11,6 +11,7 @@ const logger = require('./utils/logger');
 const authRoutes = require('./routes/authRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const postRoutes = require('./routes/postRoutes');
+const userRoutes = require('./routes/userRoutes');
 
 // Sockets
 const initChat = require('./sockets/chatSocket');
@@ -31,7 +32,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);        // ✅ works now
 app.use('/api/messages', messageRoutes); 
 app.use('/api/posts', postRoutes);
-
+app.use('/api/users', userRoutes);
 // ========== DB Connect ==========
 connect(process.env.MONGO_URI).catch((err) => {
   logger.error('DB connect failed, exiting');
