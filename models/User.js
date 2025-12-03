@@ -6,7 +6,10 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
 
-  
+  //  Friend System
+  friends: [{ type: String }], // store userId
+  incomingRequests: [{ type: String }], // userId of request senders
+  sentRequests: [{ type: String }], // userId of people this user sent requests to
 });
 
 module.exports = mongoose.model("User", userSchema);
