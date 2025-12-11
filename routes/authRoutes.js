@@ -72,9 +72,9 @@ router.post("/login", async (req, res) => {
       success: true,
       message: "Login successful!",
       user: {
-        id:user.userId, 
-        username: user.username,
-        email: user.email,
+        userId: user.userId,     // ← FIXED
+    username: user.username,
+    email: user.email,
       },
     });
   } catch (err) {
