@@ -1,189 +1,271 @@
-const User = require("../models/User");
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  Image,
+  TouchableOpacity,
+  ScrollView,
+  StyleSheet,
+  FlatList,
+  ActivityIndicator,
+  Alert,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useAuth } from "./AuthContext";
 
-// SEND FRIEND REQUEST
-exports.sendRequest = async (req, res) => {
-  try {
-    const { fromUserId, toUserId } = req.body;
+const API_URL = "https://mobserv-0din.onrender.com/api/users";
+const FRIEND_API = "https://mobserv-0din.onrender.com/api/friends";
 
-    if (fromUserId === toUserId) {
-      return res.status(400).json({ error: "You cannot add yourself" });
+const SearchScreen = ({ navigation }) => {
+  const [searchText, setSearchText] = useState("");
+  const [people, setPeople] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const [requestedUsers, setRequestedUsers] = useState([]);
+  const { user } = useAuth(); // your logged-in user
+
+  // ---------- SEARCH USER ----------
+  const searchUser = async (text) => {
+    setSearchText(text);
+    if (text.length < 1) {
+      setPeople([]);
+      return;
     }
 
-    const fromUser = await User.findOne({ userId: fromUserId });
-    const toUser = await User.findOne({ userId: toUserId });
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/username/${text}`);
+      const data = await res.json();
 
-    if (!fromUser || !toUser) {
-      return res.status(404).json({ error: "User not found" });
+      if (data.user) {
+        setPeople([data.user]);
+      } else {
+        setPeople([]);
+      }
+    } catch (err) {
+      console.log(err);
     }
+    setLoading(false);
+  };
 
-    // Already friends
-    if (fromUser.friends.includes(toUserId)) {
-      return res.status(400).json({ error: "Already friends" });
+  // ---------- SEND FRIEND REQUEST ----------
+  const sendFriendRequest = async (toUserId) => {
+    try {
+      const fromUserId = user?.userId; // FIXED — correct field
+
+      if (!fromUserId) {
+        Alert.alert("Not signed in", "Please sign in to send friend requests.");
+        return;
+      }
+
+      const res = await fetch(`${FRIEND_API}/send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fromUserId, toUserId }),
+      });
+
+      const data = await res.json();
+
+      if (data.message) {
+        setRequestedUsers([...requestedUsers, toUserId]);
+      } else {
+        console.log("Failed:", data.error);
+        Alert.alert("Error", data.error);
+      }
+    } catch (error) {
+      console.log(error);
     }
+  };
 
-    // Already requested
-    if (fromUser.sentRequests.includes(toUserId)) {
-      return res.status(400).json({ error: "Request already sent" });
+  // ---------- CANCEL FRIEND REQUEST ----------
+  const cancelFriendRequest = async (toUserId) => {
+    try {
+      const fromUserId = user?.userId; // FIXED — correct field
+
+      if (!fromUserId) {
+        Alert.alert("Not signed in", "Please sign in to cancel requests.");
+        return;
+      }
+
+      const res = await fetch(`${FRIEND_API}/cancel`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fromUserId, toUserId }),
+      });
+
+      const data = await res.json();
+
+      if (data.message) {
+        setRequestedUsers(requestedUsers.filter((uid) => uid !== toUserId));
+      } else {
+        console.log("Failed:", data.error);
+        Alert.alert("Error", data.error);
+      }
+    } catch (error) {
+      console.log(error);
     }
+  };
 
-    fromUser.sentRequests.push(toUserId);
-    toUser.incomingRequests.push(fromUserId);
+  return (
+    <ScrollView style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={22} color="#000" />
+        </TouchableOpacity>
 
-    await fromUser.save();
-    await toUser.save();
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search username..."
+          placeholderTextColor="#555"
+          value={searchText}
+          onChangeText={searchUser}
+        />
+      </View>
 
-    res.json({ message: "Friend request sent" });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ error: "Server error" });
-  }
+      {/* People Section */}
+      <Text style={styles.sectionTitle}>People</Text>
+
+      {loading ? (
+        <ActivityIndicator size="large" color="black" style={{ marginTop: 20 }} />
+      ) : (
+        <FlatList
+          horizontal
+          data={people}
+          keyExtractor={(item) => item.userId}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.horizontalList}
+          renderItem={({ item }) => {
+            const isRequested = requestedUsers.includes(item.userId);
+
+            return (
+              <View style={styles.card}>
+                {/* Avatar */}
+                <Image
+                  source={require("../assets/Stylish-Boy.webp")}
+                  style={styles.avatar}
+                />
+
+                <Text style={styles.name}>{item.username}</Text>
+                <Text style={styles.username}>{item.email}</Text>
+
+                {/* FRIEND REQUEST BUTTON */}
+                {!isRequested ? (
+                  <TouchableOpacity
+                    style={styles.addBtn}
+                    onPress={() => sendFriendRequest(item.userId)}
+                  >
+                    <Text style={styles.addBtnText}>Add Friend</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity
+                    style={styles.cancelBtn}
+                    onPress={() => cancelFriendRequest(item.userId)}
+                  >
+                    <Text style={styles.cancelBtnText}>Cancel</Text>
+                  </TouchableOpacity>
+                )}
+
+                {/* VIEW PROFILE */}
+                <TouchableOpacity
+                  style={styles.viewBtn}
+                  onPress={() =>
+                    navigation.navigate("UserProfile", { userId: item.userId })
+                  }
+                >
+                  <Text style={styles.viewBtnText}>View</Text>
+                </TouchableOpacity>
+              </View>
+            );
+          }}
+          ListEmptyComponent={
+            searchText.length > 0 ? (
+              <Text style={{ marginLeft: 15, marginTop: 10 }}>No user found</Text>
+            ) : null
+          }
+        />
+      )}
+    </ScrollView>
+  );
 };
 
-// ACCEPT REQUEST
-exports.acceptRequest = async (req, res) => {
-  try {
-    const { currentUserId, fromUserId } = req.body;
+// ====================== STYLES ======================
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: "#fff", paddingTop: 40 },
 
-    const currentUser = await User.findOne({ userId: currentUserId });
-    const fromUser = await User.findOne({ userId: fromUserId });
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderBottomWidth: 1,
+    borderBottomColor: "#ddd",
+    paddingHorizontal: 15,
+    paddingBottom: 8,
+  },
 
-    if (!currentUser || !fromUser)
-      return res.status(404).json({ error: "User not found" });
+  searchInput: {
+    flex: 1,
+    marginLeft: 10,
+    fontSize: 16,
+    color: "#000",
+  },
 
-    // Remove from request lists
-    currentUser.incomingRequests = currentUser.incomingRequests.filter(
-      (id) => id !== fromUserId
-    );
-    fromUser.sentRequests = fromUser.sentRequests.filter(
-      (id) => id !== currentUserId
-    );
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginTop: 20,
+    marginLeft: 15,
+    color: "#000",
+  },
 
-    // Add as friends
-    currentUser.friends.push(fromUserId);
-    fromUser.friends.push(currentUserId);
+  horizontalList: { paddingHorizontal: 10, paddingVertical: 10 },
 
-    await currentUser.save();
-    await fromUser.save();
+  card: {
+    alignItems: "center",
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
+    padding: 10,
+    marginHorizontal: 8,
+    width: 130,
+  },
 
-    res.json({ message: "Friend request accepted" });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ error: "Server error" });
-  }
-};
+  avatar: { width: 50, height: 50, borderRadius: 25 },
 
-// REJECT REQUEST
-exports.rejectRequest = async (req, res) => {
-  try {
-    const { currentUserId, fromUserId } = req.body;
+  name: { fontWeight: "600", fontSize: 14, marginTop: 5, color: "#000" },
 
-    const currentUser = await User.findOne({ userId: currentUserId });
-    const fromUser = await User.findOne({ userId: fromUserId });
+  username: { color: "#555", fontSize: 12, marginBottom: 10 },
 
-    if (!currentUser || !fromUser)
-      return res.status(404).json({ error: "User not found" });
+  addBtn: {
+    backgroundColor: "#007AFF",
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    marginTop: 5,
+  },
+  addBtnText: { color: "#fff", fontWeight: "600", fontSize: 12 },
 
-    // Remove from request lists
-    currentUser.incomingRequests = currentUser.incomingRequests.filter(
-      (id) => id !== fromUserId
-    );
-    fromUser.sentRequests = fromUser.sentRequests.filter(
-      (id) => id !== currentUserId
-    );
+  cancelBtn: {
+    backgroundColor: "#FF3B30",
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    marginTop: 5,
+  },
+  cancelBtnText: { color: "#fff", fontWeight: "600", fontSize: 12 },
 
-    await currentUser.save();
-    await fromUser.save();
+  viewBtn: {
+    marginTop: 6,
+    borderWidth: 1,
+    borderRadius: 6,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderColor: "#333",
+  },
+  viewBtnText: { color: "#000", fontSize: 12, fontWeight: "600" },
+});
 
-    res.json({ message: "Friend request rejected" });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ error: "Server error" });
-  }
-};
-
-// CANCEL REQUEST
-exports.cancelRequest = async (req, res) => {
-  try {
-    const { fromUserId, toUserId } = req.body;
-
-    const fromUser = await User.findOne({ userId: fromUserId });
-    const toUser = await User.findOne({ userId: toUserId });
-
-    if (!fromUser || !toUser)
-      return res.status(404).json({ error: "User not found" });
-
-    fromUser.sentRequests = fromUser.sentRequests.filter((id) => id !== toUserId);
-    toUser.incomingRequests = toUser.incomingRequests.filter((id) => id !== fromUserId);
-
-    await fromUser.save();
-    await toUser.save();
-
-    res.json({ message: "Friend request canceled" });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ error: "Server error" });
-  }
-};
-
-// GET INCOMING REQUESTS
-exports.getIncomingRequests = async (req, res) => {
-  try {
-    const { userId } = req.params;
-
-    const user = await User.findOne({ userId });
-
-    if (!user) return res.status(404).json({ error: "User not found" });
-
-    const incoming = await User.find(
-      { userId: { $in: user.incomingRequests } },
-      "userId username email"
-    );
-
-    res.json({ requests: incoming });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ error: "Server error" });
-  }
-};
-
-// GET SENT REQUESTS
-exports.getSentRequests = async (req, res) => {
-  try {
-    const { userId } = req.params;
-
-    const user = await User.findOne({ userId });
-
-    if (!user) return res.status(404).json({ error: "User not found" });
-
-    const sent = await User.find(
-      { userId: { $in: user.sentRequests } },
-      "userId username email"
-    );
-
-    res.json({ requests: sent });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ error: "Server error" });
-  }
-};
-
-// GET FRIEND LIST
-exports.getFriends = async (req, res) => {
-  try {
-    const { userId } = req.params;
-
-    const user = await User.findOne({ userId });
-
-    if (!user) return res.status(404).json({ error: "User not found" });
-
-    const friends = await User.find(
-      { userId: { $in: user.friends } },
-      "userId username email"
-    );
-
-    res.json({ friends });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ error: "Server error" });
-  }
-};
+export default SearchScreen;
