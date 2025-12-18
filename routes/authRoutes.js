@@ -23,7 +23,7 @@ router.post("/signup", async (req, res) => {
     await newUser.save();  // <— always succeeds first
 
     try {
-      await sendVerificationEmail(email);
+      await sendEmail(email);
     } catch (mailErr) {
       console.error("Email error:", mailErr.message);
     }
