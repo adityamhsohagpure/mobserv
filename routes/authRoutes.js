@@ -11,51 +11,29 @@ router.post("/signup", async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
-    if (!username || !email || !password) {
-      return res.status(400).json({ error: "All fields are required." });
-    }
+    const hashed = await bcrypt.hash(password, 10);
 
-    const existing = await User.findOne({ email });
-    if (existing) {
-      return res.status(400).json({ error: "Email already exists." });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const user = await User.create({
+    const newUser = new User({
       username,
       email,
-      password: hashedPassword,
-      isVerified: false,
+      password: hashed,
+      isVerified: false
     });
 
-    // 🔐 Generate token
-    const token = jwt.sign(
-      { id: user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" }
-    );
+    await newUser.save();  // <— always succeeds first
 
-    // 🌍 Dynamic verification link
-    const verifyLink = `${process.env.BASE_URL}/api/auth/verify/${token}`;
+    try {
+      await sendVerificationEmail(email);
+    } catch (mailErr) {
+      console.error("Email error:", mailErr.message);
+    }
 
-    // 📧 Send email
-    await sendEmail(
-      email,
-      "Verify Your Email",
-      `
-        <h2>Email Verification</h2>
-        <p>Click the link below:</p>
-        <a href="${verifyLink}">Verify Email</a>
-      `
-    );
-
-    res.status(201).json({
-      message: "Signup successful. Please verify your email.",
+    res.json({
+      message: "Signup successful. Check email for verification link"
     });
 
-  } catch (error) {
-    console.error(error);
+  } catch (err) {
+    console.error("Signup error:", err.message);
     res.status(500).json({ error: "Server error" });
   }
 });
