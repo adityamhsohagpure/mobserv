@@ -1,17 +1,28 @@
 const nodemailer = require("nodemailer");
 
-const sendEmail = async (email, subject, html) => {
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.EMAIL_USER,   // your Gmail
-      pass: process.env.EMAIL_PASS,   // App password (not your real password)
-    }
-  });
+const transporter = nodemailer.createTransport({
+  host: process.env.MAIL_HOST,
+  port: process.env.MAIL_PORT,
+  secure: false, // true only for 465
+  auth: {
+    user: process.env.MAIL_USER,
+    pass: process.env.MAIL_PASS,
+  },
+});
 
-  await transporter.sendMail({
-    from: `"MyApp" <${process.env.EMAIL_USER}>`,
-    to: email,
+// Optional: test SMTP on server start
+transporter.verify((error, success) => {
+  if (error) {
+    console.error("❌ SMTP error:", error);
+  } else {
+    console.log("✅ SMTP ready to send emails");
+  }
+});
+
+const sendEmail = async (to, subject, html) => {
+  return transporter.sendMail({
+    from: '"DoodlePad" <no-reply@doodlepad.in>',
+    to,
     subject,
     html,
   });
