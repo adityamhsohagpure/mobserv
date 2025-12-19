@@ -13,23 +13,32 @@ router.post("/signup", async (req, res) => {
 
     const hashed = await bcrypt.hash(password, 10);
 
-    const newUser = new User({
+    const newUser = await User.create({
       username,
       email,
       password: hashed,
       isVerified: false
     });
 
-    await newUser.save();  // <— always succeeds first
+    // generate JWT verification token
+    const token = jwt.sign(
+      { id: newUser._id },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
 
+    // email sending
     try {
-      await sendEmail(email);
+      await sendEmail(email, token);
     } catch (mailErr) {
-      console.error("Email error:", mailErr.message);
+      console.error("Email send failed:", mailErr.message);
+      return res.status(500).json({
+        error: "Failed to send verification email"
+      });
     }
 
     res.json({
-      message: "Signup successful. Check email for verification link"
+      message: "Signup successful! Check email for verification link.",
     });
 
   } catch (err) {
