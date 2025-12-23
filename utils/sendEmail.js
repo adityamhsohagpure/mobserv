@@ -6,13 +6,13 @@ const sendEmail = async (email, token) => {
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-      user: "adityamhsohagpure999@gmail.com",
-      pass: "jobzqhxfffusekta",
+       user: process.env.MAIL_USER,
+      pass: process.env.MAIL_PASS,
     },
   });
-
+  
   const mailOptions = {
-  from: '"Doodlepad" <adityamhsohagpure999@gmail.com>',
+  from: `"Doodlepad" <${process.env.MAIL_USER}>`,
     to: email,
     subject: "Verify your email",
     html: `
