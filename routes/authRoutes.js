@@ -30,12 +30,14 @@ router.post("/signup", async (req, res) => {
     // email sending
     try {
       await sendEmail(email, token);
-    } catch (mailErr) {
-      console.error("Email send failed:", mailErr.message);
-      return res.status(500).json({
-        error: "Failed to send verification email"
-      });
-    }
+    }catch (mailErr) {
+  console.error("========== EMAIL ERROR START ==========");
+  console.error(mailErr);   // 🔥 FULL ERROR OBJECT
+  console.error("=========== EMAIL ERROR END ===========");
+  return res.status(500).json({
+    error: "Failed to send verification email"
+  });
+}
 
     res.json({
       message: "Signup successful! Check email for verification link.",
