@@ -1,22 +1,31 @@
-const SibApiV3Sdk = require("sib-api-v3-sdk");
+const nodemailer = require("nodemailer");
 
-const client = SibApiV3Sdk.ApiClient.instance;
-client.authentications['api-key'].apiKey = process.env.BREVO_API_KEY;
+const sendEmail = async (email, token) => {
+  const verifyLink = `${process.env.BASE_URL}/api/auth/verify/${token}`;
 
-const emailApi = new SibApiV3Sdk.TransactionalEmailsApi();
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: "adityamhsohagpure999@gmail.com",
+      pass: "jobz qhxf ffus ekta",
+    },
+  });
 
-async function sendEmail(to, subject, html) {
-  try {
-    return await emailApi.sendTransacEmail({
-      sender: { email: process.env.MAIL_SENDER },
-      to: [{ email: to }],
-      subject,
-      htmlContent: html,
-    });
-  } catch (err) {
-    console.error("❌ Brevo API Email Error:", err.response?.body || err);
-    throw err;
-  }
-}
+  const mailOptions = {
+  from: '"Doodlepad" <adityamhsohagpure999@gmail.com>',
+    to: email,
+    subject: "Verify your email",
+    html: `
+      <h2>Email Verification</h2>
+      <p>Click the link below to verify your email:</p>
+      <a href="${verifyLink}" target="_blank">
+        Verify Email
+      </a>
+      <p>This link expires in 1 hour.</p>
+    `,
+  };
+
+  await transporter.sendMail(mailOptions);
+};
 
 module.exports = sendEmail;
