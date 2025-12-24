@@ -19,7 +19,16 @@ router.post("/signup", async (req, res) => {
 
     const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
 
-    await sendEmail(email, token);
+   // Inside router.post("/signup")
+try {
+  await sendEmail(email, token);
+} catch (mailErr) {
+  console.error("FULL ERROR:", mailErr);
+  return res.status(500).json({ 
+    error: "Mail system failed", 
+    details: mailErr.message // This will tell you EXACTLY why Resend rejected it
+  });
+}
 
     res.json({ message: "Signup successful! Please check your email to verify your account." });
   } catch (err) {
