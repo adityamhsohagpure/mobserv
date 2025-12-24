@@ -1,31 +1,28 @@
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const sendEmail = async (email, token) => {
-  const verifyLink = `${process.env.BASE_URL}/api/auth/verify/${token}`;
+  // Render uses https, local uses http
+  const baseUrl = process.env.NODE_ENV === "production" 
+    ? "https://mobserv-0din.onrender.com" 
+    : "http://localhost:5000";
 
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-       user: process.env.MAIL_USER,
-      pass: process.env.MAIL_PASS,
-    },
-  });
-  
-  const mailOptions = {
-  from: `"Doodlepad" <${process.env.MAIL_USER}>`,
+  const verificationLink = `${baseUrl}/api/auth/verify/${token}`;
+
+  await resend.emails.send({
+    from: "onboarding@resend.dev", // ⚠️ Update this once you verify your domain
     to: email,
     subject: "Verify your email",
     html: `
-      <h2>Email Verification</h2>
-      <p>Click the link below to verify your email:</p>
-      <a href="${verifyLink}" target="_blank">
-        Verify Email
-      </a>
-      <p>This link expires in 1 hour.</p>
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; padding: 20px;">
+        <h2 style="color: #333;">Welcome to Our App!</h2>
+        <p>Please click the button below to verify your email address:</p>
+        <a href="${verificationLink}" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px;">Verify Email</a>
+        <p style="margin-top: 20px; font-size: 12px; color: #777;">If the button doesn't work, copy this link: <br> ${verificationLink}</p>
+      </div>
     `,
-  };
-
-  await transporter.sendMail(mailOptions);
+  });
 };
 
 module.exports = sendEmail;
