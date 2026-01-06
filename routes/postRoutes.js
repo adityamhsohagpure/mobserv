@@ -28,7 +28,7 @@ router.get("/test", (req, res) => {
 router.post("/upload-post", uploadPost);
 
 // ⭐ Get posts of a specific user
-router.get("/user/:username", getPostsByUser);
+router.get("/user/:userid", getPostsByUser);
 
 // ⭐ Get ALL posts
 router.get("/", getAllPosts);
