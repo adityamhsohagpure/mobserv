@@ -35,16 +35,18 @@ exports.getPostsByUser = async (req, res) => {
   try {
     const { userid } = req.params;
 
-    // ⭐ Case-insensitive search — GUARANTEED match
-    const posts = await Post.find({
-      userid: { $regex: new RegExp(userid, "i") }
-    });
+    if (!userid) {
+      return res.status(400).json({ message: "User ID required" });
+    }
+
+    const posts = await Post.find({ userid }).sort({ date: -1 });
 
     res.status(200).json({
       message: `Posts by ${userid}`,
-      posts
+      posts,
     });
   } catch (error) {
+    console.error("getPostsByUser error:", error);
     res.status(500).json({ error: error.message });
   }
 };
