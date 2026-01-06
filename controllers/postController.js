@@ -30,14 +30,9 @@ exports.uploadPost = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
 exports.getPostsByUser = async (req, res) => {
   try {
     const { userid } = req.params;
-
-    if (!userid) {
-      return res.status(400).json({ message: "User ID required" });
-    }
 
     const posts = await Post.find({ userid }).sort({ date: -1 });
 
@@ -46,7 +41,6 @@ exports.getPostsByUser = async (req, res) => {
       posts,
     });
   } catch (error) {
-    console.error("getPostsByUser error:", error);
     res.status(500).json({ error: error.message });
   }
 };
