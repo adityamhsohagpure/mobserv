@@ -44,7 +44,7 @@ exports.getPostsByUser = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-// GET ALL POSTS
+// GET ALL POSTSbbv
 exports.getAllPosts = async (req, res) => {
   try {
     const posts = await Post.find().sort({ date: -1 });
