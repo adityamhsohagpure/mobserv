@@ -11,28 +11,51 @@ router.post("/signup", async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
+    if (!username || !email || !password) {
+      return res.status(400).json({ error: "All fields are required" });
+    }
+
     const existingUser = await User.findOne({ email });
-    if (existingUser) return res.status(400).json({ error: "Email already exists" });
+    if (existingUser) {
+      return res.status(400).json({ error: "Email already exists" });
+    }
 
     const hashed = await bcrypt.hash(password, 10);
-    const newUser = await User.create({ username, email, password: hashed });
 
-    const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
+    const newUser = await User.create({
+      username,
+      email,
+      password: hashed,
+      isVerified: false
+    });
 
-   // Inside router.post("/signup")
-try {
-  await sendEmail(email, token);
-} catch (mailErr) {
-  console.error("FULL ERROR:", mailErr);
-  return res.status(500).json({ 
-    error: "Mail system failed", 
-    details: mailErr.message // This will tell you EXACTLY why Resend rejected it
-  });
-}
+    const token = jwt.sign(
+      { id: newUser._id },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
 
-    res.json({ message: "Signup successful! Please check your email to verify your account." });
+    // 🔵 TRY EMAIL, BUT DO NOT FAIL SIGNUP
+    try {
+      await sendEmail(email, token);
+    } catch (mailErr) {
+      console.error("Email failed:", mailErr.message);
+    }
+
+    // ✅ ALWAYS RETURN SUCCESS
+    res.status(201).json({
+      message: "Signup successful. Please check your email to verify.",
+      user: {
+        id: newUser._id,
+        username: newUser.username,
+        email: newUser.email,
+        isVerified: false
+      }
+    });
+
   } catch (err) {
-    res.status(500).json({ error: "Signup failed: " + err.message });
+    console.error("Signup error:", err);
+    res.status(500).json({ error: "Signup failed" });
   }
 });
 
