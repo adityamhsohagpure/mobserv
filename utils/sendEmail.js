@@ -10,7 +10,7 @@ const sendEmail = async (email, token) => {
 
   // Destructure { data, error } from the response
   const { data, error } = await resend.emails.send({
-    from: "onboarding@resend.dev", // ⚠️ Must be exactly this for testing
+    from:  "Doodlepad <noreply@doodlepad.in>",//✅ VERIFIED DOMAIN
     to: email, 
     subject: "Verify your email",
     html: `<p>Click <a href="${verificationLink}">here</a> to verify.</p>`,
