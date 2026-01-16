@@ -30,25 +30,21 @@ exports.uploadPost = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
 exports.getPostsByUser = async (req, res) => {
   try {
     const { userid } = req.params;
 
-    // ⭐ Case-insensitive search — GUARANTEED match
-    const posts = await Post.find({
-      userid: { $regex: new RegExp(userid, "i") }
-    });
+    const posts = await Post.find({ userid }).sort({ date: -1 });
 
     res.status(200).json({
       message: `Posts by ${userid}`,
-      posts
+      posts,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
-// GET ALL POSTS
+// GET ALL POSTSbbv
 exports.getAllPosts = async (req, res) => {
   try {
     const posts = await Post.find().sort({ date: -1 });
