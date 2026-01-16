@@ -35,6 +35,11 @@ app.use('/api/messages', messageRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/users', userRoutes);
 app.use("/api/friends", friendRoutes);
+
+
+// Admin
+app.use("/admin", require("./routes/admin"));
+
 // ========== DB Connect ==========
 connect(process.env.MONGO_URI).catch((err) => {
   logger.error('DB connect failed, exiting');
