@@ -84,7 +84,7 @@ exports.updateBio = async (req, res) => {
     });
 
   } catch (err) {
-    console.log(err);
-    res.status(500).json({ error: "Server error" });
-  }
+  console.log("FULL ERROR:", err);
+  res.status(500).json({ error: err.message });
+}
 };
