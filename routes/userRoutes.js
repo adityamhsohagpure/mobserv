@@ -2,22 +2,18 @@ const express = require("express");
 const router = express.Router();
 
 const {
+  searchUsers,
   findByUsername,
-  getUserProfile,
-  updateBio,
-  updateProfile
+  updateBio
 } = require("../controllers/userController");
 
-// 🔍 Find user by username
+// GET /api/users/search?q=text
+router.get("/search", searchUsers);
+
+// GET /api/users/username/:username
 router.get("/username/:username", findByUsername);
 
-// 👤 Get user profile by userId
-router.get("/profile/:userId", getUserProfile);
-
-// ✏️ Update only bio
+// PUT /api/users/update-bio/:userId
 router.put("/update-bio/:userId", updateBio);
-
-// 🛠 Update full profile
-router.put("/update-profile/:userId", updateProfile);
 
 module.exports = router;
