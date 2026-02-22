@@ -88,3 +88,25 @@ exports.updateBio = async (req, res) => {
   res.status(500).json({ error: err.message });
 }
 };
+exports.getUserProfile = async (req, res) => {
+  try {
+    const user = await User.findOne(
+      { userId: req.params.userId }
+    ).select("userId username email bio profilePicture friends");
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.json({
+      user: {
+        ...user.toObject(),
+        friendsCount: user.friends?.length || 0
+      }
+    });
+
+  } catch (err) {
+    console.log("Profile fetch error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
