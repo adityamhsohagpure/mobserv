@@ -13,7 +13,7 @@ const postSchema = new mongoose.Schema({
 
   // ✔ Using userid as your actual identity field
   userid: { type: String, required: true },
-
+   username: { type: String, required: true },
   url: String,
   caption: { type: String, default: "" },
   type: { type: String, required: true },

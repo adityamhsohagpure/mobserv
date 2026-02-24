@@ -15,6 +15,7 @@ exports.uploadPost = async (req, res) => {
     const newPost = new Post({
       postId: uuidv4(),
       userid,
+      username,
       url,
       caption,
       type,   // ⭐ FIX: Type added here
