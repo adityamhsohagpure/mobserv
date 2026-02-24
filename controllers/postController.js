@@ -4,9 +4,9 @@ const { v4: uuidv4 } = require("uuid");
 exports.uploadPost = async (req, res) => {
   try {
     // ⭐ FIX: Add "type" here
-    const { userid, url, caption, type } = req.body;
+    const { userid, url,username, caption, type } = req.body;
 
-    if (!userid || !url || !type) {
+    if (!userid ||!username || !url || !type) {
       return res
         .status(400)
         .json({ message: "Userid, URL and type are required" });
