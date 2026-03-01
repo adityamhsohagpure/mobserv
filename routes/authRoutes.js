@@ -9,48 +9,71 @@ const router = express.Router();
 // SIGNUP
 router.post("/signup", async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const { firstName, lastName, username, email, password, bio } = req.body;
 
-    if (!username || !email || !password) {
-      return res.status(400).json({ error: "All fields are required" });
+    // 🔹 Validate required fields
+    if (!firstName || !lastName || !username || !email || !password) {
+      return res.status(400).json({ error: "All required fields must be filled" });
     }
 
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
+    // 🔹 Validate bio length (optional)
+    if (bio && bio.length > 200) {
+      return res.status(400).json({ error: "Bio cannot exceed 200 characters" });
+    }
+
+    // 🔹 Check existing email
+    const existingEmail = await User.findOne({ email });
+    if (existingEmail) {
       return res.status(400).json({ error: "Email already exists" });
     }
 
+    // 🔹 Check existing username
+    const existingUsername = await User.findOne({ username });
+    if (existingUsername) {
+      return res.status(400).json({ error: "Username already taken" });
+    }
+
+    // 🔹 Hash password
     const hashed = await bcrypt.hash(password, 10);
 
+    // 🔹 Create user
     const newUser = await User.create({
+      firstName,
+      lastName,
       username,
       email,
       password: hashed,
-      isVerified: false
+      bio: bio || "", // ✅ optional
+      isVerified: false,
     });
 
+    // 🔹 Create JWT
     const token = jwt.sign(
       { id: newUser._id },
-      process.env.JWT_SECRET,
-      { expiresIn: "1h" }
+      process.env.JWT_SECRET
     );
 
-    // 🔵 TRY EMAIL, BUT DO NOT FAIL SIGNUP
+    // 🔵 Send email (don’t fail signup if email fails)
     try {
       await sendEmail(email, token);
     } catch (mailErr) {
       console.error("Email failed:", mailErr.message);
     }
 
-    // ✅ ALWAYS RETURN SUCCESS
+    // ✅ Success Response
     res.status(201).json({
       message: "Signup successful. Please check your email to verify.",
       user: {
         id: newUser._id,
+        userId: newUser.userId,
+        firstName: newUser.firstName,
+        lastName: newUser.lastName,
         username: newUser.username,
         email: newUser.email,
-        isVerified: false
-      }
+        bio: newUser.bio,
+        profilePicture: newUser.profilePicture,
+        isVerified: newUser.isVerified,
+      },
     });
 
   } catch (err) {

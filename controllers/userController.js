@@ -17,7 +17,7 @@ exports.searchUsers = async (req, res) => {
           { username: regex },
           { email: regex }
         ]
-      },
+      },  
       "userId username email" // only return these fields
     ).limit(20);
 
