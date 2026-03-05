@@ -1,35 +1,43 @@
 const mongoose = require("mongoose");
 
-// Comment Schema
+// Comment Schema (same as post)
 const commentSchema = new mongoose.Schema({
   userid: { type: String, required: true },
   text: { type: String, required: true },
   date: { type: Date, default: Date.now }
 });
 
-// Post Schema
-const postSchema = new mongoose.Schema({
-  postId: { type: String, required: true, unique: true },
+// Text Post Schema
+const textPostSchema = new mongoose.Schema({
+  textPostId: { type: String, required: true, unique: true },
 
-  // ✔ Using userid as your actual identity field
+  // user identity
   userid: { type: String, required: true },
-   username: { type: String, required: true },
-  url: String,
+  username: { type: String, required: true },
+
+  // text content
+  text: { type: String, required: true },
+
   caption: { type: String, default: "" },
-  type: { type: String, required: true },
+
+  textColor: { type: String, default: "#111" },
+
+  type: { type: String, default: "text" },
+
   date: { type: Date, default: Date.now },
 
-  // Likes will store the user IDs who liked the post
+  // Likes
   likes: {
     type: [String],
     default: []
   },
 
-  // Comments array
+  // Comments
   comments: {
     type: [commentSchema],
     default: []
   }
+
 });
 
-module.exports = mongoose.model("Post", postSchema);
+module.exports = mongoose.model("TextPost", textPostSchema);
