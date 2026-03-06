@@ -3,23 +3,36 @@ const { v4: uuidv4 } = require("uuid");
 
 exports.uploadPost = async (req, res) => {
   try {
-    // ⭐ FIX: Add "type" here
-    const { userid, url,username, caption, type } = req.body;
+    const { userid, username, url, caption, type, textPost } = req.body;
 
-    if (!userid ||!username || !url || !type) {
-      return res
-        .status(400)
-        .json({ message: "Userid, URL and type are required" });
+    if (!userid || !username || !type) {
+      return res.status(400).json({
+        message: "userid, username and type are required",
+      });
+    }
+
+    // Validation based on post type
+    if ((type === "image" || type === "video") && !url) {
+      return res.status(400).json({
+        message: "URL is required for image/video posts",
+      });
+    }
+
+    if (type === "text" && !textPost) {
+      return res.status(400).json({
+        message: "textPost content is required for text posts",
+      });
     }
 
     const newPost = new Post({
       postId: uuidv4(),
       userid,
       username,
-      url,
+      url: url || null,
+      textPost: textPost || null,
       caption,
-      type,   // ⭐ FIX: Type added here
-    });   
+      type,
+    });
 
     await newPost.save();
 
@@ -31,6 +44,10 @@ exports.uploadPost = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+
+
+// GET POSTS BY USER
 exports.getPostsByUser = async (req, res) => {
   try {
     const { userid } = req.params;
@@ -45,7 +62,10 @@ exports.getPostsByUser = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-// GET ALL POSTSbbv
+
+
+
+// GET ALL POSTS
 exports.getAllPosts = async (req, res) => {
   try {
     const posts = await Post.find().sort({ date: -1 });

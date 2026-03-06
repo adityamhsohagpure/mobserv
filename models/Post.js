@@ -11,25 +11,49 @@ const commentSchema = new mongoose.Schema({
 const postSchema = new mongoose.Schema({
   postId: { type: String, required: true, unique: true },
 
-  // ✔ Using userid as your actual identity field
+  // User Info
   userid: { type: String, required: true },
-   username: { type: String, required: true },
-  url: String,
-  caption: { type: String, default: "" },
-  type: { type: String, required: true },
-  date: { type: Date, default: Date.now },
+  username: { type: String, required: true },
 
-  // Likes will store the user IDs who liked the post
+  // Media post
+  url: {
+    type: String,
+    default: null
+  },
+
+  // Text post
+  textPost: {
+    type: String,
+    default: null
+  },
+
+  caption: {
+    type: String,
+    default: ""
+  },
+
+  // post type -> image / video / text
+  type: {
+    type: String,
+    required: true
+  },
+
+  date: {
+    type: Date,
+    default: Date.now
+  },
+
+  // Likes
   likes: {
     type: [String],
     default: []
   },
 
-  // Comments array
+  // Comments
   comments: {
     type: [commentSchema],
     default: []
   }
 });
 
-module.exports = mongoose.model("Post", postSchema); 
+module.exports = mongoose.model("Post", postSchema);
