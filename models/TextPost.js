@@ -37,4 +37,4 @@ const textPostSchema = new mongoose.Schema({
 
 module.exports =
   mongoose.models.TextPost ||
-  mongoose.model("TextPost", textPostSchema);
+  mongoose.model("TextPost", postSchema);
