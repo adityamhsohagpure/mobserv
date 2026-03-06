@@ -37,8 +37,6 @@ app.use('/api/users', userRoutes);
 app.use("/api/friends", friendRoutes);
 
 
-const textPostRoutes = require("./routes/textpostRoutes");
-app.use("/api/textposts", textPostRoutes);
 
 // Admin
 app.use("/admin", require("./routes/admin"));

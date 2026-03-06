@@ -1,17 +1,15 @@
 const express = require("express");
 const router = express.Router();
 
-// ⭐ IMPORT POST CONTROLLER FUNCTIONS
+// Controllers
 const {
   uploadPost,
   getPostsByUser,
   getAllPosts
 } = require("../controllers/postController");
 
-// ⭐ IMPORT LIKE CONTROLLER
 const { toggleLike } = require("../controllers/likeController");
 
-// ⭐ IMPORT COMMENT CONTROLLER
 const {
   addComment,
   getComments,
@@ -19,26 +17,32 @@ const {
 } = require("../controllers/commentController");
 
 
-// TEST ROUTE
+// Test Route
 router.get("/test", (req, res) => {
   res.send("Post Routes Working 🚀");
 });
 
-// ⭐ Upload Post
+
+// Upload Post (image / video / text)
 router.post("/upload-post", uploadPost);
 
-// ⭐ Get posts of a specific user
-router.get("/user/:userid", getPostsByUser);
 
-// ⭐ Get ALL posts
+// Get all posts (Feed)
 router.get("/", getAllPosts);
 
-// ⭐ LIKE / UNLIKE a Post
+
+// Get posts by specific user
+router.get("/user/:userid", getPostsByUser);
+
+
+// Like / Unlike Post
 router.post("/:postId/like", toggleLike);
 
-// ⭐ COMMENTS
+
+// Comments
 router.post("/:postId/comments", addComment);                 // Add comment
-router.get("/:postId/comments", getComments);                 // Get all comments
+router.get("/:postId/comments", getComments);                 // Get comments
 router.delete("/:postId/comments/:commentId", deleteComment); // Delete comment
+
 
 module.exports = router;

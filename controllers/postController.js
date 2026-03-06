@@ -24,15 +24,17 @@ exports.uploadPost = async (req, res) => {
       });
     }
 
-    const newPost = new Post({
-      postId: uuidv4(),
-      userid,
-      username,
-      url: url || null,
-      textPost: textPost || null,
-      caption,
-      type,
-    });
+ const newPost = new Post({
+  postId: uuidv4(),
+  userid,
+  username,
+  url: url || null,
+  textPost: textPost || null,
+  textColor: textColor || "#111",
+  caption,
+  type
+});
+
 
     await newPost.save();
 
