@@ -3,7 +3,7 @@ const { v4: uuidv4 } = require("uuid");
 
 exports.uploadPost = async (req, res) => {
   try {
-    const { userid, username, url, caption, type, textPost } = req.body;
+    const { userid, username, url, caption, type, textPost, textColor } = req.body;
 
     if (!userid || !username || !type) {
       return res.status(400).json({
@@ -24,17 +24,16 @@ exports.uploadPost = async (req, res) => {
       });
     }
 
- const newPost = new Post({
-  postId: uuidv4(),
-  userid,
-  username,
-  url: url || null,
-  textPost: textPost || null,
-  textColor: textColor || "#111",
-  caption,
-  type
-});
-
+    const newPost = new Post({
+      postId: uuidv4(),
+      userid,
+      username,
+      url: url || null,
+      textPost: textPost || null,
+      textColor: textColor || "#111",
+      caption,
+      type
+    });
 
     await newPost.save();
 
@@ -42,11 +41,11 @@ exports.uploadPost = async (req, res) => {
       message: "Post uploaded successfully!",
       post: newPost,
     });
+
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
-
 
 
 // GET POSTS BY USER
