@@ -6,13 +6,17 @@ const TextPost = require("../models/TextPost");
 // Create text post
 router.post("/create", async (req, res) => {
   try {
-    const { text, caption, textColor, userId } = req.body;
+
+    const { text, caption, textColor, userid, username } = req.body;
 
     const newPost = new TextPost({
+      textPostId: "text_" + Date.now(),
+      userid,
+      username,
       text,
       caption,
       textColor,
-      userId,
+      type: "text"
     });
 
     const savedPost = await newPost.save();
@@ -20,20 +24,29 @@ router.post("/create", async (req, res) => {
     res.status(201).json(savedPost);
 
   } catch (error) {
+    console.log(error);
     res.status(500).json({ error: error.message });
   }
 });
 
 
-// Get all posts
+// Get all text posts
 router.get("/all", async (req, res) => {
   try {
-    const posts = await TextPost.find().sort({ createdAt: -1 });
 
-    res.json(posts);
+    const posts = await TextPost.find()
+      .sort({ date: -1 });
+
+    res.json({
+      posts
+    });
 
   } catch (error) {
-    res.status(500).json({ error: error.message });
+
+    res.status(500).json({
+      error: error.message
+    });
+
   }
 });
 
