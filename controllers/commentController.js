@@ -4,16 +4,16 @@ const Post = require("../models/Post");
 exports.addComment = async (req, res) => {
   try {
     const { postId } = req.params;
-    const { userid, text } = req.body;
+    const { userid,username, text } = req.body;
 
-    if (!userid || !text) {
-      return res.status(400).json({ error: "userid & text are required" });
+    if (!userid ||!username|| !text) {
+      return res.status(400).json({ error: "userid,username & text are required" });
     }
 
     const post = await Post.findOne({ postId });
     if (!post) return res.status(404).json({ error: "Post not found" });
 
-    const newComment = { userid, text, date: new Date() };
+    const newComment = { userid, username, text, date: new Date() };
 
     post.comments.push(newComment);
     await post.save();

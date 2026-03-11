@@ -4,7 +4,8 @@ const mongoose = require("mongoose");
 const commentSchema = new mongoose.Schema({
   userid: { type: String, required: true },
   text: { type: String, required: true },
-  date: { type: Date, default: Date.now }
+  date: { type: Date, default: Date.now },
+  username: {type :String , required:true }
 });
 
 // Post Schema
