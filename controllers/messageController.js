@@ -83,3 +83,36 @@ exports.postMessage = async (req, res) => {
   }
 
 };
+
+exports.getChatUsers = async (req, res) => {
+  try {
+
+    const { userId } = req.params;
+
+    const messages = await Message.find({
+      $or: [
+        { senderId: userId },
+        { receiverId: userId }
+      ]
+    }).sort({ createdAt: -1 });
+
+    const chats = {};
+
+    messages.forEach(msg => {
+      const otherUser =
+        msg.senderId === userId ? msg.receiverId : msg.senderId;
+
+      if (!chats[otherUser]) {
+        chats[otherUser] = msg;
+      }
+    });
+
+    res.json(Object.values(chats));
+
+  } catch (err) {
+
+    console.error(err);
+    res.status(500).json({ error: err.message });
+
+  }
+};
