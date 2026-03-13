@@ -1,38 +1,85 @@
-const Message = require('../models/Message');
+const Message = require("../models/Message");
 
+/*
+GET /messages?user1=ID1&user2=ID2&page=1&limit=50
+*/
 exports.getMessages = async (req, res) => {
-  const { user1, user2 } = req.query;
+
   try {
-    let messages;
+
+    const { user1, user2, page = 1, limit = 50 } = req.query;
+
+    const skip = (page - 1) * limit;
+
+    // If both users provided → fetch conversation
     if (user1 && user2) {
-      messages = await Message.find({
+
+      const messages = await Message.find({
         $or: [
           { senderId: user1, receiverId: user2 },
-          { senderId: user2, receiverId: user1 },
-        ],
-      }).sort({ createdAt: 1 });
-    } else {
-      messages = await Message.find().sort({ createdAt: 1 }).limit(50);
+          { senderId: user2, receiverId: user1 }
+        ]
+      })
+      .sort({ createdAt: 1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+      return res.json(messages);
     }
+
+    // If users not provided → return latest messages
+    const messages = await Message.find()
+      .sort({ createdAt: -1 })
+      .limit(parseInt(limit));
+
     res.json(messages);
+
   } catch (err) {
+
+    console.error(err);
     res.status(500).json({ error: err.message });
+
   }
 };
 
+
+
+/*
+POST /messages
+Body:
+{
+ senderId,
+ receiverId,
+ text
+}
+*/
 exports.postMessage = async (req, res) => {
+
   try {
+
     const { senderId, receiverId, text } = req.body;
+
     if (!senderId || !receiverId || !text) {
-      return res.status(400).json({ error: 'Missing required fields' });
+      return res.status(400).json({
+        error: "senderId, receiverId and text are required"
+      });
     }
 
-    const newMessage = new Message({ senderId, receiverId, text });
+    const newMessage = new Message({
+      senderId,
+      receiverId,
+      text
+    });
+
     await newMessage.save();
 
-    // send created message back
     res.status(201).json(newMessage);
+
   } catch (err) {
+
+    console.error(err);
     res.status(500).json({ error: err.message });
+
   }
+
 };
