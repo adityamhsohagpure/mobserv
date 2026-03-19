@@ -1,65 +1,25 @@
+module.exports = (io) => {
+  io.on("connection", (socket) => {
+    console.log("User connected:", socket.id);
 
-import { Platform } from "react-native";
-
-class SocketService {
-  socket = null;
-
-  connect(userId) {
-    if (this.socket) return;
-
-    const URL =
-      Platform.OS === "android"
-        ? "http://10.0.2.2:5000"   // Android emulator
-        : "http://localhost:5000"; // iOS / web
-
-    this.socket = io(URL, {
-      transports: ["websocket"], // 🔥 IMPORTANT
+    // 🔹 Join user room
+    socket.on("join", (userId) => {
+      socket.join(userId);
+      console.log(`User ${userId} joined`);
     });
 
-    this.socket.on("connect", () => {
-      console.log("✅ Socket connected:", this.socket.id);
-      this.socket.emit("join", userId);
+    // 🔹 Typing
+    socket.on("typing", ({ to }) => {
+      io.to(to).emit("typing");
     });
 
-    this.socket.on("disconnect", () => {
-      console.log("❌ Socket disconnected");
+    socket.on("stopTyping", ({ to }) => {
+      io.to(to).emit("stopTyping");
     });
-  }
 
-  // 🔥 SEND MESSAGE
-  sendMessage(data) {
-    this.socket.emit("sendMessage", data);
-  }
-
-  // 🔥 RECEIVE MESSAGE
-  onMessage(callback) {
-    this.socket.on("newMessage", callback);
-  }
-
-  // 🔥 READ RECEIPT
-  onMessageRead(callback) {
-    this.socket.on("messageRead", callback);
-  }
-
-  // 🔥 TYPING
-  typing(to) {
-    this.socket.emit("typing", { to });
-  }
-
-  onTyping(callback) {
-    this.socket.on("typing", callback);
-  }
-
-  stopTyping(to) {
-    this.socket.emit("stopTyping", { to });
-  }
-
-  disconnect() {
-    if (this.socket) {
-      this.socket.disconnect();
-      this.socket = null;
-    }
-  }
-}
-
-export default new SocketService();
+    // 🔹 Disconnect
+    socket.on("disconnect", () => {
+      console.log("User disconnected:", socket.id);
+    });
+  });
+};
