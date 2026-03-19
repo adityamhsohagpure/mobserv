@@ -1,83 +1,44 @@
-const Post = require("../models/Post");
-const { v4: uuidv4 } = require("uuid");
 
-exports.uploadPost = async (req, res) => {
+const mongoose = require("mongoose");
+const Message = require("../models/Message");
+
+exports.getMessages = async (req, res) => {
   try {
-    const { userid, username, url, caption, type, textPost, textColor } = req.body;
+    const { user1, user2, limit = 50, skip = 0 } = req.query;
 
-    if (!userid || !username || !type) {
-      return res.status(400).json({
-        message: "userid, username and type are required",
-      });
+    if (!user1 || !user2) {
+      return res.status(400).json({ error: "user1 and user2 required" });
     }
 
-    // Validation based on post type
-    if ((type === "image" || type === "video") && !url) {
-      return res.status(400).json({
-        message: "URL is required for image/video posts",
-      });
-    }
+    const messages = await Message.find({
+      $or: [
+        { senderId: user1, receiverId: user2 },
+        { senderId: user2, receiverId: user1 }
+      ]
+    })
+      .sort({ createdAt: -1 }) // newest first
+      .skip(Number(skip))
+      .limit(Number(limit))
+      .lean();
 
-    if (type === "text" && !textPost) {
-      return res.status(400).json({
-        message: "textPost content is required for text posts",
-      });
-    }
-
-    const newPost = new Post({
-      postId: uuidv4(),
-      userid,
-      username,
-      url: url || null,
-      textPost: textPost || null,
-      textColor: textColor || "#111",
-      caption,
-      type
-    });
-
-    await newPost.save();
-
-    res.status(201).json({
-      message: "Post uploaded successfully!",
-      post: newPost,
-    });
-
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.json(messages.reverse()); // return oldest → newest
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };
-
-
-// GET POSTS BY USER
-exports.getPostsByUser = async (req, res) => {
+exports.postMessage = async (req, res) => {
   try {
-    const { userid } = req.params;
+    const { senderId, receiverId, text } = req.body;
+    if (!senderId || !receiverId || !text) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
 
-    const posts = await Post.find({ userid }).sort({ date: -1 });
+    const newMessage = new Message({ senderId, receiverId, text });
+    await newMessage.save();
 
-    res.status(200).json({
-      message: `Posts by ${userid}`,
-      posts,
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-
-
-// GET ALL POSTS
-exports.getAllPosts = async (req, res) => {
-  try {
-    const posts = await Post.find().sort({ date: -1 });
-
-    res.status(200).json({
-      message: "All posts",
-      count: posts.length,
-      posts,
-    });
-  } catch (error) {
-    console.error("GET ALL POSTS ERROR:", error);
-    res.status(500).json({ error: "Internal server error" });
+    // send created message back
+    res.status(201).json(newMessage);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };
