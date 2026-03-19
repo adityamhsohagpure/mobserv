@@ -1,44 +1,61 @@
+const Post = require("../models/Post");
+const { v4: uuidv4 } = require("uuid");
 
-const mongoose = require("mongoose");
-const Message = require("../models/Message");
-
-exports.getMessages = async (req, res) => {
+exports.uploadPost = async (req, res) => {
   try {
-    const { user1, user2, limit = 50, skip = 0 } = req.query;
+    // ⭐ FIX: Add "type" here
+    const { userid, url, caption, type } = req.body;
 
-    if (!user1 || !user2) {
-      return res.status(400).json({ error: "user1 and user2 required" });
+    if (!userid || !url || !type) {
+      return res
+        .status(400)
+        .json({ message: "Userid, URL and type are required" });
     }
 
-    const messages = await Message.find({
-      $or: [
-        { senderId: user1, receiverId: user2 },
-        { senderId: user2, receiverId: user1 }
-      ]
-    })
-      .sort({ createdAt: -1 }) // newest first
-      .skip(Number(skip))
-      .limit(Number(limit))
-      .lean();
+    const newPost = new Post({
+      postId: uuidv4(),
+      userid,
+      url,
+      caption,
+      type,   // ⭐ FIX: Type added here
+    });   
 
-    res.json(messages.reverse()); // return oldest → newest
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    await newPost.save();
+
+    res.status(201).json({
+      message: "Post uploaded successfully!",
+      post: newPost,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };
-exports.postMessage = async (req, res) => {
+exports.getPostsByUser = async (req, res) => {
   try {
-    const { senderId, receiverId, text } = req.body;
-    if (!senderId || !receiverId || !text) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
+    const { userid } = req.params;
 
-    const newMessage = new Message({ senderId, receiverId, text });
-    await newMessage.save();
+    const posts = await Post.find({ userid }).sort({ date: -1 });
 
-    // send created message back
-    res.status(201).json(newMessage);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(200).json({
+      message: `Posts by ${userid}`,
+      posts,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+// GET ALL POSTSbbv
+exports.getAllPosts = async (req, res) => {
+  try {
+    const posts = await Post.find().sort({ date: -1 });
+
+    res.status(200).json({
+      message: "All posts",
+      count: posts.length,
+      posts,
+    });
+  } catch (error) {
+    console.error("GET ALL POSTS ERROR:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 };

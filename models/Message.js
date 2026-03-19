@@ -1,38 +1,36 @@
 const mongoose = require("mongoose");
 
-const MessageSchema = new mongoose.Schema(
-{
-  senderId: {
-    type: String,
-    required: true
+const messageSchema = new mongoose.Schema(
+  {
+    senderId: {
+      type: String,
+      required: true,
+    },
+    receiverId: {
+      type: String,
+      required: true,
+    },
+    text: {
+      type: String,
+      trim: true,
+    },
+    type: {
+      type: String,
+      default: "text", // text | image | video
+    },
+    mediaUrl: {
+      type: String,
+    },
+    status: {
+      type: String,
+      enum: ["sent", "delivered", "seen"],
+      default: "sent",
+    },
   },
-
-  receiverId: {
-    type: String,
-    required: true
-  },
-
-  text: {
-    type: String,
-    default: ""
-  },
-
-  messageType: {
-    type: String,
-    enum: ["text", "image"],
-    default: "text"
-  },
-
-  isRead: {
-    type: Boolean,
-    default: false
-  }
-
-},
-{
-  timestamps: true,
-  collection: "messages"
-}
+  { timestamps: true }
 );
 
-module.exports = mongoose.model("Message", MessageSchema);
+// 🔥 IMPORTANT INDEX (PERFORMANCE BOOST)
+messageSchema.index({ senderId: 1, receiverId: 1, createdAt: -1 });
+
+module.exports = mongoose.model("Message", messageSchema);

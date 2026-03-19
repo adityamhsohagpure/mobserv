@@ -1,14 +1,22 @@
 const express = require("express");
 const router = express.Router();
-const controller = require("../controllers/messageController");
+const {
+  getMessages,
+  postMessage,
+  markAsRead,
+  getChatUsers,
+} = require("../controllers/messageController");
 
-// Send a message
-router.post("/messages", controller.postMessage);
+// GET messages
+router.get("/", getMessages);
 
-// Get messages between two users
-router.get("/messages/:senderId/:receiverId", controller.getMessages);
+// SEND message
+router.post("/", postMessage);
 
-// Get chat list for a user (last message per chat)
-router.get("/chat-users/:userId", controller.getChatUsers);
+// MARK AS READ
+router.put("/read", markAsRead);
+
+// CHAT LIST
+router.get("/chats/:userId", getChatUsers);
 
 module.exports = router;

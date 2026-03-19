@@ -1,118 +1,145 @@
 const Message = require("../models/Message");
 
-/*
-GET /messages?user1=ID1&user2=ID2&page=1&limit=50
-*/
+// ================= GET MESSAGES =================
 exports.getMessages = async (req, res) => {
-
   try {
-
     const { user1, user2, page = 1, limit = 50 } = req.query;
+
+    if (!user1 || !user2) {
+      return res.status(400).json({ error: "user1 & user2 required" });
+    }
 
     const skip = (page - 1) * limit;
 
-    // If both users provided → fetch conversation
-    if (user1 && user2) {
-
-      const messages = await Message.find({
-        $or: [
-          { senderId: user1, receiverId: user2 },
-          { senderId: user2, receiverId: user1 }
-        ]
-      })
-      .sort({ createdAt: 1 })
-      .skip(skip)
-      .limit(parseInt(limit));
-
-      return res.json(messages);
-    }
-
-    // If users not provided → return latest messages
-    const messages = await Message.find()
+    const messages = await Message.find({
+      $or: [
+        { senderId: user1, receiverId: user2 },
+        { senderId: user2, receiverId: user1 },
+      ],
+    })
       .sort({ createdAt: -1 })
-      .limit(parseInt(limit));
+      .skip(Number(skip))
+      .limit(Number(limit))
+      .lean();
 
-    res.json(messages);
-
+    res.json(messages.reverse());
   } catch (err) {
-
-    console.error(err);
     res.status(500).json({ error: err.message });
-
   }
 };
 
-
-
-/*
-POST /messages
-Body:
-{
- senderId,
- receiverId,
- text
-}
-*/
+// ================= SEND MESSAGE =================
 exports.postMessage = async (req, res) => {
-
   try {
-
     const { senderId, receiverId, text } = req.body;
 
-    if (!senderId || !receiverId || !text) {
+    if (!senderId?.trim() || !receiverId?.trim() || !text?.trim()) {
       return res.status(400).json({
-        error: "senderId, receiverId and text are required"
+        error: "senderId, receiverId, text required",
       });
     }
 
-    const newMessage = new Message({
+    const message = await Message.create({
       senderId,
       receiverId,
-      text
+      text,
+      status: "sent",
     });
 
-    await newMessage.save();
+    const io = req.app.get("io");
 
-    res.status(201).json(newMessage);
+    // 🔥 Emit ONLY to receiver
+    io.to(receiverId).emit("newMessage", message);
 
+    res.status(201).json(message);
   } catch (err) {
-
-    console.error(err);
     res.status(500).json({ error: err.message });
-
   }
-
 };
 
-exports.getChatUsers = async (req, res) => {
+// ================= MARK AS READ =================
+exports.markAsRead = async (req, res) => {
   try {
+    const { messageIds, userId } = req.body;
 
-    const { userId } = req.params;
+    await Message.updateMany(
+      {
+        _id: { $in: messageIds },
+        receiverId: userId,
+      },
+      { $set: { status: "seen" } }
+    );
 
-    const messages = await Message.find({
-      $or: [
-        { senderId: userId },
-        { receiverId: userId }
-      ]
-    }).sort({ createdAt: -1 });
+    const io = req.app.get("io");
 
-    const chats = {};
+    // 🔥 Notify senders
+    const senderIds = await Message.find({
+      _id: { $in: messageIds },
+    }).distinct("senderId");
 
-    messages.forEach(msg => {
-      const otherUser =
-        msg.senderId === userId ? msg.receiverId : msg.senderId;
-
-      if (!chats[otherUser]) {
-        chats[otherUser] = msg;
-      }
+    senderIds.forEach((senderId) => {
+      io.to(senderId).emit("messageRead", {
+        messageIds,
+      });
     });
 
-    res.json(Object.values(chats));
-
+    res.json({ success: true });
   } catch (err) {
-
-    console.error(err);
     res.status(500).json({ error: err.message });
+  }
+};
 
+// ================= CHAT LIST =================
+exports.getChatUsers = async (req, res) => {
+  try {
+    const userId = req.params.userId;
+
+    const chats = await Message.aggregate([
+      {
+        $match: {
+          $or: [{ senderId: userId }, { receiverId: userId }],
+        },
+      },
+      { $sort: { createdAt: -1 } },
+
+      {
+        $group: {
+          _id: {
+            $cond: [
+              { $eq: ["$senderId", userId] },
+              "$receiverId",
+              "$senderId",
+            ],
+          },
+          lastMessage: { $first: "$text" },
+          lastMessageTime: { $first: "$createdAt" },
+          unreadCount: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    { $eq: ["$receiverId", userId] },
+                    { $ne: ["$status", "seen"] },
+                  ],
+                },
+                1,
+                0,
+              ],
+            },
+          },
+        },
+      },
+    ]);
+
+    res.json(
+      chats.map((chat) => ({
+        userId: chat._id,
+        lastMessage: chat.lastMessage,
+        lastMessageTime: chat.lastMessageTime,
+        unreadCount: chat.unreadCount,
+      }))
+    );
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };

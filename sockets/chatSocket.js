@@ -1,29 +1,65 @@
-const Message = require('../models/Message');
+import io from "socket.io-client";
+import { Platform } from "react-native";
 
-module.exports = function initChat(io) {
-  io.on('connection', (socket) => {
-    console.log('🟢 A user connected: ' + socket.id);
+class SocketService {
+  socket = null;
 
-    socket.on('join', (userId) => {
-      socket.userId = userId;
-      console.log(`👤 ${userId} joined the chat`);
+  connect(userId) {
+    if (this.socket) return;
+
+    const URL =
+      Platform.OS === "android"
+        ? "http://10.0.2.2:5000"   // Android emulator
+        : "http://localhost:5000"; // iOS / web
+
+    this.socket = io(URL, {
+      transports: ["websocket"], // 🔥 IMPORTANT
     });
 
-    socket.on('sendMessage', async (data) => {
-      const { senderId, receiverId, text } = data;
-      const newMessage = new Message({ senderId, receiverId, text });
-      await newMessage.save();
-
-      io.emit('receiveMessage', {
-        senderId,
-        receiverId,
-        text,
-        createdAt: newMessage.createdAt,
-      });
+    this.socket.on("connect", () => {
+      console.log("✅ Socket connected:", this.socket.id);
+      this.socket.emit("join", userId);
     });
 
-    socket.on('disconnect', () => {
-      console.log('🔴 A user disconnected: ' + socket.id);
+    this.socket.on("disconnect", () => {
+      console.log("❌ Socket disconnected");
     });
-  });
-};
+  }
+
+  // 🔥 SEND MESSAGE
+  sendMessage(data) {
+    this.socket.emit("sendMessage", data);
+  }
+
+  // 🔥 RECEIVE MESSAGE
+  onMessage(callback) {
+    this.socket.on("newMessage", callback);
+  }
+
+  // 🔥 READ RECEIPT
+  onMessageRead(callback) {
+    this.socket.on("messageRead", callback);
+  }
+
+  // 🔥 TYPING
+  typing(to) {
+    this.socket.emit("typing", { to });
+  }
+
+  onTyping(callback) {
+    this.socket.on("typing", callback);
+  }
+
+  stopTyping(to) {
+    this.socket.emit("stopTyping", { to });
+  }
+
+  disconnect() {
+    if (this.socket) {
+      this.socket.disconnect();
+      this.socket = null;
+    }
+  }
+}
+
+export default new SocketService();
