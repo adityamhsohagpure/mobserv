@@ -1,4 +1,4 @@
-import io from "socket.io-client";
+
 import { Platform } from "react-native";
 
 class SocketService {
