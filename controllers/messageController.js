@@ -10,7 +10,6 @@ exports.getMessages = async (req, res) => {
     }
 
     const skip = (page - 1) * limit;
-
     const messages = await Message.find({
       $or: [
         { senderId: user1, receiverId: user2 },
@@ -31,24 +30,25 @@ exports.getMessages = async (req, res) => {
 // ================= SEND MESSAGE =================
 exports.postMessage = async (req, res) => {
   try {
-    const { senderId, receiverId, text } = req.body;
+    const { senderId, receiverId, text, type, mediaUrl } = req.body;
 
-    if (!senderId?.trim() || !receiverId?.trim() || !text?.trim()) {
+    if (!senderId?.trim() || !receiverId?.trim()) {
       return res.status(400).json({
-        error: "senderId, receiverId, text required",
+        error: "senderId and receiverId required",
       });
     }
 
     const message = await Message.create({
       senderId,
       receiverId,
-      text,
+      text: type === "text" ? text : "",
+      mediaUrl: type === "image" ? mediaUrl : "",
+      type: type || "text",
       status: "sent",
     });
 
     const io = req.app.get("io");
 
-    // 🔥 Emit ONLY to receiver
     io.to(receiverId).emit("newMessage", message);
 
     res.status(201).json(message);
@@ -56,7 +56,6 @@ exports.postMessage = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
-
 // ================= MARK AS READ =================
 exports.markAsRead = async (req, res) => {
   try {
