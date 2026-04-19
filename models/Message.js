@@ -16,7 +16,7 @@ const messageSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      default: "text", // text | image | video
+      default: "text",
     },
     mediaUrl: {
       type: String,
@@ -30,7 +30,8 @@ const messageSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// 🔥 IMPORTANT INDEX (PERFORMANCE BOOST)
-messageSchema.index({ senderId: 1, receiverId: 1, createdAt: -1 });
+// 🔥 OPTIMIZED INDEXES
+messageSchema.index({ senderId: 1, createdAt: -1 });
+messageSchema.index({ receiverId: 1, createdAt: -1 });
 
 module.exports = mongoose.model("Message", messageSchema);

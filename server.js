@@ -15,6 +15,7 @@ const postRoutes = require("./routes/postRoutes");
 const userRoutes = require("./routes/userRoutes");
 const friendRoutes = require("./routes/friendRoutes");
 
+const conversationRoutes = require("./routes/conversationRoutes");
 // Sockets
 const initChat = require("./sockets/chatSocket");
 
@@ -43,7 +44,7 @@ app.use("/api/messages", messageRoutes); // 🔥 FIXED
 app.use("/api/posts", postRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/friends", friendRoutes);
-
+app.use("/api", conversationRoutes);
 // Admin
 app.use("/admin", require("./routes/admin"));
 
